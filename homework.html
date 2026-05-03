@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multi Step Form</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background: linear-gradient(135deg, #f3f4f6 0%, #e0f2fe 100%); }
+    .sidebar-bg {
+      background-image: url('https://i.imgur.com/0Z8Z8Z8.png'); /* Заменить на реальный bg если нужно */
+      background-size: cover;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4 font-sans">
+
+  <div class="max-w-5xl w-full bg-white rounded-3xl shadow-2xl overflow-hidden flex min-h-[600px]">
+
+    <!-- Sidebar -->
+    <div class="w-80 bg-[#483EFF] text-white relative flex-shrink-0 rounded-l-3xl overflow-hidden">
+      <img src="/multi-step-form-main/assets/images/bg-sidebar-desktop.svg" alt="bg" class="absolute inset-0 w-full h-full object-cover opacity-90"> 
+      <!-- Лучше использовать локальный SVG, но для примера оставил -->
+
+      <div class="relative z-10 p-8 pt-10">
+        <div class="space-y-8">
+          <div onclick="goToStep(1)" class="step-item flex items-center gap-4 cursor-pointer" id="step1">
+            <div class="w-9 h-9 border-2 border-white rounded-full flex items-center justify-center font-bold text-lg">1</div>
+            <div>
+              <p class="text-xs tracking-widest">STEP 1</p>
+              <p class="font-semibold">YOUR INFO</p>
+            </div>
+          </div>
+
+          <div onclick="goToStep(2)" class="step-item flex items-center gap-4 cursor-pointer opacity-70" id="step2">
+            <div class="w-9 h-9 border-2 border-white rounded-full flex items-center justify-center font-bold text-lg">2</div>
+            <div>
+              <p class="text-xs tracking-widest">STEP 2</p>
+              <p class="font-semibold">SELECT PLAN</p>
+            </div>
+          </div>
+
+          <div onclick="goToStep(3)" class="step-item flex items-center gap-4 cursor-pointer opacity-70" id="step3">
+            <div class="w-9 h-9 border-2 border-white rounded-full flex items-center justify-center font-bold text-lg">3</div>
+            <div>
+              <p class="text-xs tracking-widest">STEP 3</p>
+              <p class="font-semibold">ADD-ONS</p>
+            </div>
+          </div>
+
+          <div onclick="goToStep(4)" class="step-item flex items-center gap-4 cursor-pointer opacity-70" id="step4">
+            <div class="w-9 h-9 border-2 border-white rounded-full flex items-center justify-center font-bold text-lg">4</div>
+            <div>
+              <p class="text-xs tracking-widest">STEP 4</p>
+              <p class="font-semibold">SUMMARY</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content Area -->
+    <div class="flex-1 p-10" id="content">
+      <!-- Steps will be loaded here by JS -->
+    </div>
+  </div>
+
+  <script>
+    let currentStep = 1;
+    let isYearly = false;
+
+    const plans = {
+      arcade: { monthly: 9, yearly: 90 },
+      advanced: { monthly: 12, yearly: 120 },
+      pro: { monthly: 15, yearly: 150 }
+    };
+
+    function renderStep(step) {
+      const content = document.getElementById('content');
+      updateActiveStep();
+
+      if (step === 1) {
+        content.innerHTML = `
+          <div class="max-w-md mx-auto">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">Personal info</h1>
+            <p class="text-gray-500 mb-8">Please provide your name, email address, and phone number.</p>
+            
+            <form onsubmit="nextStep(); return false;" class="space-y-6">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                <input type="text" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-blue-600" placeholder="e.g. Stephen King" required>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                <input type="email" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-blue-600" placeholder="e.g. stephenking@lorem.com" required>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                <input type="tel" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-blue-600" placeholder="e.g. +1 234 567 890" required>
+              </div>
+              <div class="flex justify-end pt-6">
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-10 py-3 rounded-xl font-medium">Next Step</button>
+              </div>
+            </form>
+          </div>`;
+      } 
+      else if (currentStep === 3) {
+  content.innerHTML = `
+    <div class="max-w-2xl mx-auto">
+      <h1 class="text-4xl font-bold text-gray-800">Pick add-ons</h1>
+      <p class="text-gray-500 mt-2 mb-8">Add-ons help enhance your gaming experience.</p>
+      
+      <div class="space-y-4">
+        <!-- Online Service -->
+        <div onclick="toggleAddon('online')" class="addon flex items-center justify-between p-5 border rounded-2xl cursor-pointer hover:border-blue-500 ${addons.online ? 'border-blue-600 bg-blue-50' : ''}">
+          <div class="flex items-center gap-5">
+            <input type="checkbox" ${addons.online ? 'checked' : ''} class="w-5 h-5 accent-blue-600">
+            <div>
+              <p class="font-semibold">Online service</p>
+              <p class="text-sm text-gray-500">Access to multiplayer games</p>
+            </div>
+          </div>
+          <p class="text-blue-600 font-medium">+$${isYearly ? 10 : 1}${isYearly ? '/yr' : '/mo'}</p>
+        </div>
+
+        <!-- Larger Storage -->
+        <div onclick="toggleAddon('storage')" class="addon flex items-center justify-between p-5 border rounded-2xl cursor-pointer hover:border-blue-500 ${addons.storage ? 'border-blue-600 bg-blue-50' : ''}">
+          <div class="flex items-center gap-5">
+            <input type="checkbox" ${addons.storage ? 'checked' : ''} class="w-5 h-5 accent-blue-600">
+            <div>
+              <p class="font-semibold">Larger storage</p>
+              <p class="text-sm text-gray-500">Extra 1TB of cloud save</p>
+            </div>
+          </div>
+          <p class="text-blue-600 font-medium">+$${isYearly ? 20 : 2}${isYearly ? '/yr' : '/mo'}</p>
+        </div>
+
+        <!-- Customizable Profile -->
+        <div onclick="toggleAddon('profile')" class="addon flex items-center justify-between p-5 border rounded-2xl cursor-pointer hover:border-blue-500 ${addons.profile ? 'border-blue-600 bg-blue-50' : ''}">
+          <div class="flex items-center gap-5">
+            <input type="checkbox" ${addons.profile ? 'checked' : ''} class="w-5 h-5 accent-blue-600">
+            <div>
+              <p class="font-semibold">Customizable profile</p>
+              <p class="text-sm text-gray-500">Custom theme on your profile</p>
+            </div>
+          </div>
+          <p class="text-blue-600 font-medium">+$${isYearly ? 20 : 2}${isYearly ? '/yr' : '/mo'}</p>
+        </div>
+      </div>
+
+      <div class="flex justify-between mt-10">
+        <button onclick="prevStep()" class="text-gray-500 font-medium">Go Back</button>
+        <button onclick="nextStep()" class="bg-blue-600 text-white px-10 py-3 rounded-xl hover:bg-blue-700">Next Step</button>
+      </div>
+    </div>`;
+}
+
+
+else if (currentStep === 4) {
+  const total = calculateTotal();
+  content.innerHTML = `
+    <div class="max-w-2xl mx-auto">
+      <h1 class="text-4xl font-bold text-gray-800">Finishing up</h1>
+      <p class="text-gray-500 mt-2 mb-8">Double-check everything looks OK before confirming.</p>
+      
+      <div class="bg-gray-50 rounded-2xl p-6 mb-6">
+        <div class="flex justify-between items-center pb-6 border-b">
+          <div>
+            <p class="font-semibold capitalize">${selectedPlan} (${isYearly ? 'Yearly' : 'Monthly'})</p>
+            <a href="#" onclick="goToStep(2); return false;" class="text-blue-600 text-sm underline">Change</a>
+          </div>
+          <p class="font-bold">$${isYearly ? planPrices[selectedPlan].yr : planPrices[selectedPlan].mo}${isYearly ? '/yr' : '/mo'}</p>
+        </div>
+        
+        <div class="pt-6 space-y-3">
+          ${addons.online ? `<div class="flex justify-between"><span class="text-gray-500">Online service</span><span class="font-medium">+$${isYearly ? 10 : 1}${isYearly ? '/yr' : '/mo'}</span></div>` : ''}
+          ${addons.storage ? `<div class="flex justify-between"><span class="text-gray-500">Larger storage</span><span class="font-medium">+$${isYearly ? 20 : 2}${isYearly ? '/yr' : '/mo'}</span></div>` : ''}
+          ${addons.profile ? `<div class="flex justify-between"><span class="text-gray-500">Customizable profile</span><span class="font-medium">+$${isYearly ? 20 : 2}${isYearly ? '/yr' : '/mo'}</span></div>` : ''}
+        </div>
+      </div>
+
+      <div class="flex justify-between items-center px-6 text-lg">
+        <p class="text-gray-500">Total (${isYearly ? 'per year' : 'per month'})</p>
+        <p class="text-3xl font-bold text-blue-600">+$${total}${isYearly ? '/yr' : '/mo'}</p>
+      </div>
+
+      <div class="flex justify-between mt-10">
+        <button onclick="prevStep()" class="text-gray-500 font-medium">Go Back</button>
+        <button onclick="finish()" class="bg-blue-600 text-white px-10 py-3 rounded-xl hover:bg-blue-700">Confirm</button>
+      </div>
+    </div>`;
+} 
+else if (currentStep === 5) {
+  content.innerHTML = `
+    <div class="max-w-md mx-auto text-center pt-16">
+      <div class="mx-auto w-20 h-20 bg-[#F9818E] rounded-full flex items-center justify-center mb-8">
+        <svg width="50" height="50" viewBox="0 0 80 80" fill="none"><path fill="#FFF" d="M40.003 18.333a21.58 21.58 0 0 1 15.31 6.351c8.471 8.471 8.471 22.158 0 30.63-8.47 8.47-22.156 8.47-30.627 0-8.47-8.472-8.47-22.159 0-30.63a21.594 21.594 0 0 1 15.317-6.35Zm9.865 15c-.316.028-.622.15-.872.344l-12.168 9.13-5.641-5.642c-1.224-1.275-3.63 1.132-2.356 2.356l6.663 6.663c.56.56 1.539.63 2.173.156l13.326-9.995c1.122-.816.43-2.993-.956-3.013a1.666 1.666 0 0 0-.17 0Z"/></svg>
+      </div>
+      <h1 class="text-4xl font-bold text-gray-800 mb-4">Thank you!</h1>
+      <p class="text-gray-500 leading-relaxed">Thanks for confirming your subscription! We hope you have fun using our platform. If you ever need support, please feel free to email us at support@loremgaming.com.</p>
+    </div>`;
+}
+    }
+
+    function updateActiveStep() {
+      for (let i = 1; i <= 4; i++) {
+        const el = document.getElementById(`step${i}`);
+        if (el) el.classList.toggle('opacity-100', i === currentStep);
+        if (el) el.classList.toggle('opacity-70', i !== currentStep);
+      }
+    }
+
+    function nextStep() {
+      if (currentStep < 4) {
+        currentStep++;
+        renderStep(currentStep);
+      } else {
+        renderStep(5);
+      }
+    }
+
+    function goToStep(step) {
+      currentStep = step;
+      renderStep(step);
+    }
+
+
+    function toggleAddon(key) {
+  addons[key] = !addons[key];
+  renderStep();
+}
+
+function calculateTotal() {
+  let total = isYearly ? planPrices[selectedPlan].yr : planPrices[selectedPlan].mo;
+  if (addons.online) total += isYearly ? 10 : 1;
+  if (addons.storage) total += isYearly ? 20 : 2;
+  if (addons.profile) total += isYearly ? 20 : 2;
+  return total;
+}
+
+function finish() {
+  currentStep = 5;
+  renderStep();
+}
+
+    // Start
+    renderStep(1);
+  </script>
+</body>
+</html>
